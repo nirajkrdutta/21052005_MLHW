@@ -1,0 +1,130 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the data
+independent_data = pd.read_csv('linearX.csv')
+dependent_data = pd.read_csv('linearY.csv')
+
+# Convert the data to numpy arrays
+X = independent_data.values
+y = dependent_data.values
+
+# Standardize the independent variable X
+X = (X - X.mean()) / X.std()
+
+# Number of training examples
+m = len(y)
+
+# Initialize parameters
+theta = np.zeros((2, 1))
+
+# Learning rate and number of iterations
+alpha = 0.5
+iterations = 1000
+
+# Function to compute the cost J(theta)
+def compute_cost(X, y, theta):
+    m = len(y)
+    h = X.dot(theta)
+    cost = (1 / (2 * m)) * np.sum((h - y) ** 2)
+    return cost
+
+# Gradient Descent function
+def gradient_descent(X, y, theta, alpha, iterations):
+    m = len(y)
+    cost_history = np.zeros(iterations)
+
+    for i in range(iterations):
+        h = X.dot(theta)
+        theta = theta - (alpha / m) * (X.T.dot(h - y))
+        cost_history[i] = compute_cost(X, y, theta)
+
+    return theta, cost_history
+
+# Add a column of ones to X for the bias term
+X_b = np.c_[np.ones((m, 1)), X]
+
+# Run gradient descent
+theta, cost_history = gradient_descent(X_b, y, theta, alpha, iterations)
+
+# Print the learned parameters and final cost
+print("Theta0:", theta[0][0])
+print("Theta1:", theta[1][0])
+print("Final Cost:", cost_history[-1])
+
+# Plot cost function vs iteration
+plt.plot(range(1, iterations + 1), cost_history, color='blue')
+plt.xlabel('Iterations')
+plt.ylabel('Cost Function Value')
+plt.title('Cost Function vs Iteration')
+plt.show()
+
+# Plot the data and regression line
+plt.scatter(X, y, label='Data points')
+plt.plot(X, X_b.dot(theta), color='red', label='Linear Regression')
+plt.xlabel('Standardized Independent Variable')
+plt.ylabel('Dependent Variable')
+plt.legend()
+plt.show()
+alpha_values = [0.005, 0.5, 5]
+
+for alpha in alpha_values:
+    theta, cost_history = gradient_descent(X_b, y, theta, alpha, iterations)
+    print(f"Learning Rate: {alpha}")
+    print("Theta0:", theta[0][0])
+    print("Theta1:", theta[1][0])
+    print("Final Cost:", cost_history[-1])
+
+    # Plot cost function vs iteration
+    plt.plot(range(1, iterations + 1), cost_history, label=f'LR={alpha}')
+
+plt.xlabel('Iterations')
+plt.ylabel('Cost Function Value')
+plt.title('Cost Function vs Iteration for Different Learning Rates')
+plt.legend()
+plt.show()
+def stochastic_gradient_descent(X, y, theta, alpha, iterations):
+    m = len(y)
+    cost_history = np.zeros(iterations)
+
+    for i in range(iterations):
+        for j in range(m):
+            h = X[j].dot(theta)
+            theta = theta - (alpha / m) * (X[j].T * (h - y[j]))
+        cost_history[i] = compute_cost(X, y, theta)
+
+    return theta, cost_history
+
+def minibatch_gradient_descent(X, y, theta, alpha, iterations, batch_size):
+    m = len(y)
+    cost_history = np.zeros(iterations)
+
+    for i in range(iterations):
+        for j in range(0, m, batch_size):
+            X_batch = X[j:j+batch_size]
+            y_batch = y[j:j+batch_size]
+            h = X_batch.dot(theta)
+            theta = theta - (alpha / batch_size) * (X_batch.T.dot(h - y_batch))
+        cost_history[i] = compute_cost(X, y, theta)
+
+    return theta, cost_history
+
+# ...
+
+# Stochastic Gradient Descent
+theta_stochastic, cost_history_stochastic = stochastic_gradient_descent(X_b, y, theta, alpha, iterations)
+
+# Mini-Batch Gradient Descent
+theta_minibatch, cost_history_minibatch = minibatch_gradient_descent(X_b, y, theta, alpha, iterations, batch_size=10)
+
+# Plot cost function vs iteration for all methods
+plt.plot(range(1, iterations + 1), cost_history, label='Batch GD', color='blue')
+plt.plot(range(1, iterations + 1), cost_history_stochastic, label='Stochastic GD', color='green')
+plt.plot(range(1, iterations + 1), cost_history_minibatch, label='Mini-Batch GD', color='orange')
+
+plt.xlabel('Iterations')
+plt.ylabel('Cost Function Value')
+plt.title('Comparison of Different Gradient Descent Methods')
+plt.legend()
+plt.show()
